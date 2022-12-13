@@ -11,3 +11,7 @@ Olası Kombine Yoksa Kelime Eşleşmiyor Döndürüp, Oluşturulan Veri Kadarın
 -> Bilgisayarın Oluşturduğu X Kadar Basamak Sayıyı Bulmaya Çalışmak
 
 
+3-) English
+-> İngilizce Konuşup Türkçe Öğrenmek, Türkçe Konuşup İngilizce Öğrenmek Kalıcı Kelime Ezberlemek.
+
+
