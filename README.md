@@ -8,6 +8,6 @@ Olası Kombine Yoksa Kelime Eşleşmiyor Döndürüp, Oluşturulan Veri Kadarın
 
 
 2-) Mastermint
+-> Bilgisayarın Oluşturduğu X Kadar Basamak Sayıyı Bulmaya Çalışmak
 
-Bilgisayarın Oluşturduğu X Kadar Basamak Sayıyı Bulmaya Çalışmak
 
