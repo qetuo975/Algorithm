@@ -84,3 +84,48 @@ class Deque(object):
         return self.items.pop(0)
 
     def size(self):
+
+
+import ctypes
+
+
+class DynamicArray(object):
+    def __init__(self):
+        self.n = 0
+        self.kapasite = 1
+        self.A = self.make_array(self.kapasite)
+
+    def __len__(self):
+        return self.n
+
+    def __getitem__(self, k):
+        if not 0 <= k < self.n:
+            return IndexError("K is out of bounds")
+
+        return self.A[k]
+
+    def append(self, item):
+
+        # Kapasite Dolu İse Kapasiteyi 2 Katına Çıkar
+        if self.n == self.kapasite:
+            self._resize(2 * self.kapasite)
+
+        # Eleman Ekleyip Eleman Sayısını Arttır
+        self.A[self.n] = item
+        self.n += 1
+
+    def _resize(self, new_cap):
+        B = self.make_array(new_cap)  # Yeni Array Yap
+
+        # Eski Arrayı Yeni Arraya Aktar
+        for k in range(self.n):
+            B[k] = self.A[k]
+
+        self.A = B
+        self.kapasite = new_cap
+
+    def make_array(self, new_cap):
+        # return yeni array
+        return (new_cap * ctypes.py_object)()
+
+
