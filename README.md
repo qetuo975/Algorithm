@@ -16,5 +16,8 @@ Olası Kombine Yoksa Kelime Eşleşmiyor Döndürüp, Oluşturulan Veri Kadarın
 -> Array Veri Tipleri
 
 5-) Single, Doubly Linked List
--> Linked List in Python
+-> Linked List Pythonda Kullanımı
+
+6-) LinkedList Method
+-> Linked List Python Tüm Methodları.
 
