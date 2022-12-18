@@ -9,7 +9,7 @@ Olası Kombine Yoksa Kelime Eşleşmiyor Döndürüp, Oluşturulan Veri Kadarın
 2-) Mastermint
 -> Bilgisayarın Oluşturduğu X Kadar Basamak Sayıyı Bulmaya Çalışmak
 
-3-) English
+3-) English Speaking and Learning
 -> İngilizce Konuşup Türkçe Öğrenmek, Türkçe Konuşup İngilizce Öğrenmek Kalıcı Kelime Ezberlemek.
 
 4-) Stack, Deque, Queue
