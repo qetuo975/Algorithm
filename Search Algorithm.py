@@ -126,6 +126,7 @@ def JumpSearch(Array, Value):
 # JumpSearch([0,1,2,3,4,5,6,7,8,9,10],8)
 
 
+# Hashing Algorithm
 # O(1) Olan Bir Data Structer Elde Edebiliriz.
 # Hash Table Değerlerinin Daha Sonra Kolay Bulunabilmesini Sağlayan Data Structer Yapısıdır.
 # Hash Table Üzerindeki Her Bir Pozisyon Slots Olarak Adlandırılır. ( Boş Bir Liste Olarak Düşünülebilir)
