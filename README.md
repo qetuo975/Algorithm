@@ -24,3 +24,6 @@ Olası Kombine Yoksa Kelime Eşleşmiyor Döndürüp, Oluşturulan Veri Kadarın
 7-) Recursion Algorithm
 -> Yineleyici Fonksiyon Algoritmaları
 
+8-) Search Algorithm
+-> Tüm Arama Algoritma Tipleri (Binary, Jumping, Hash..)
+
