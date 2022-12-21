@@ -170,6 +170,34 @@ class HashTable(object):
         print(self.HashTable, "\n")
 
     def SearchBinaryAlgorithm(self):
+        
+                
+        """
+        HashIndex = int(self.SearchKey) % 8
+        
+        # Base Case
+        if len(self.HashTable[HashIndex]) == 0:
+            return False
+    
+        # Recursive Case
+        else:
+            middleIndex = int(len(self.HashTable[HashIndex]) / 2)
+        
+            if self.HashTable[HashIndex][middleIndex] == self.SearchKey:
+                return True
+        
+            else:
+            
+                # Lower
+                if self.SearchKey < self.HashTable[HashIndex][middleIndex]:
+                    return self.SearchBinaryAlgorithm(self.HashTable[HashIndex][:middleIndex], self.SearchKey)
+            
+                # Upper
+                else:
+                    return self.SearchBinaryAlgorithm(self.HashTable[HashIndex][middleIndex + 1:], self.SearchKey)
+        """
+        
+        
         HashIndex = int(self.SearchKey) % 8
 
         first_index = 0
