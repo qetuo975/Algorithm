@@ -27,3 +27,5 @@ Olası Kombine Yoksa Kelime Eşleşmiyor Döndürüp, Oluşturulan Veri Kadarın
 8-) Search Algorithm
 -> Tüm Arama Algoritma Tipleri (Binary, Jumping, Hash..)
 
+9-) Sorting Algorithm
+-> Tüm Sıralama Algoritma Tipleri (Merge, Bubble, Quick..)
