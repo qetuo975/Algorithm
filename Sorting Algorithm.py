@@ -26,45 +26,56 @@ BubbleSortAlgorithm([42, 213, 25, 256, 3263, 26])
 # Daha Sonra En Küçük Sub Array'den Sıralamaya Başlayarak Birleştirir.
 # Splits List in A Half.
 
-def MergeSort(Array):
-    if len(Array) > 1:
-        mid = int(len(Array) / 2)
-        lefthalf = Array[:mid]
-        righthalf = Array[mid:]
-
+def MergeSort(arr):
+    
+    if len(arr) > 1:
+        mid = int(len(arr) / 2)
+        
+        lefthalf = arr[:mid]
+        righthalf = arr[mid:]
+        
+        
+        # 1 İndeks Kalana Kadar Parçalamak
         MergeSort(lefthalf)
         MergeSort(righthalf)
-
-        LEFT = 0
-        RİGHT = 0
-        ALL = 0
-
-        # Parçala
-        while LEFT < len(lefthalf) and RİGHT < len(righthalf):
-            ALL += 1
-
-            if lefthalf[LEFT] < righthalf[RİGHT]:
-                Array[ALL] = lefthalf[LEFT]
-                LEFT += 1
+        
+        
+        i = 0
+        j = 0
+        k = 0
+        
+        # Küçükten Büyüğe Doğru Sıralamak
+        while i < len(lefthalf) and j < len(righthalf):
+            
+            
+            if lefthalf[i] < righthalf[j]:
+                arr[k] = lefthalf[i]
+                i += 1
+                
             else:
-                Array[ALL] = righthalf[RİGHT]
-                RİGHT += 1
+                arr[k] = righthalf[j]
+                j += 1
+            
+            k += 1
+            
+        
+        # Tekrardan oluşturmak
+        while i < len(lefthalf):
+            arr[k] = lefthalf[i]
+            i += 1
+            k += 1
+            
+        while j < len(righthalf):
+            arr[k] = righthalf[j]
+            j += 1
+            k += 1
+            
+            
+    return arr
+            
+        
 
-        # Birleştir
-        while LEFT < len(lefthalf):
-            Array[ALL] = lefthalf[LEFT]
-            LEFT += 1
-            ALL += 1
-
-        while RİGHT < len(righthalf):
-            Array[ALL] = righthalf[RİGHT]
-            RİGHT += 1
-            ALL += 1
-
-    return Array
-
-
-# MergeSort([4,2,7,22,11,33,45,22,92,83])
+#MergeSort([4,7,1,23,99,44,223,6236,323])
 
 
 # Sub List Kullanır.
