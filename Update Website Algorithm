@@ -1,0 +1,814 @@
+from colorama import Fore, Back, Style, init
+from Historic_Crypto import HistoricalData
+from Historic_Crypto import LiveCryptoData
+from PyQt6.QtCore import *
+from binance import Client
+import time
+import pymysql
+init(autoreset=True)
+
+
+class Worker(QRunnable):
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    @pyqtSlot()
+    def run(self):
+        '''
+        Initialise the runner function with passed args, kwargs.
+        '''
+        self.fn(*self.args, **self.kwargs)
+class SQL(object):
+    def __init__(self, host, port, user, password, database):
+        self.connection = pymysql.connect(host=host,
+                                          port=port,
+                                          user=user,
+                                          passwd=password,
+                                          database=database)
+
+        self.cursor = self.connection.cursor()
+
+    def Update(self, database, table, value, WHERE, KEY):
+        sql = f"UPDATE {database} SET {table} = '{value}' WHERE {WHERE} = '{KEY}'".strip()
+        self.cursor.execute(sql)
+        self.connection.commit()
+        print(Fore.GREEN + "\nSQL : ", Fore.LIGHTBLUE_EX + str(sql))
+        print(Fore.GREEN + "---------- Update Successful ----------\n")
+
+    def Select(self, query, database, WHERE=None, KEY=None):
+        if not WHERE is None:
+            sql = f"SELECT {query} FROM {database} WHERE {WHERE} = '{KEY}'".strip()
+            self.cursor.execute(sql)
+            self.data = self.cursor.fetchall()
+            print(Fore.MAGENTA + "\nSQL : ", Fore.LIGHTYELLOW_EX + str(sql))
+            print(Fore.MAGENTA + "---------- Select Successful ----------\n")
+            return self.data
+
+        else:
+            sql = f"SELECT {query} FROM {database}".strip()
+            self.cursor.execute(sql)
+            self.data = self.cursor.fetchall()
+            print(Fore.MAGENTA + "\nSQL : ", Fore.LIGHTYELLOW_EX + str(sql))
+            print(Fore.MAGENTA + "---------- Select Successful ----------\n")
+            return self.data
+class Binance(object):
+    def __init__(self, api, secret):
+        self.binance = Client(api_key=api, api_secret=secret)
+
+    # ACCOUNT FONKSİYONLARI
+    def ROB_ACCOUNT_GET_BALANCE(self, symbol):
+        return self.binance.get_asset_balance(asset=symbol)['free']
+
+    def ROB_ACCOUNT_STATUS(self):
+        return self.binance.get_account()
+
+    def ROB_ALL_CRYPTO_PRICE(self):
+        return self.binance.get_all_tickers()
+
+
+class HistoricCrypto(object):
+
+    # Class Public Attribute
+    # -------------------------------
+    ocak_max = 31
+    subat_max = 28
+    mart_max = 31
+    nisan_max = 30
+    mayıs_max = 31
+    haziran_max = 30
+    temmuz_max = 31
+    agustos_max = 31
+    eylul_max = 30
+    ekim_max = 31
+    kasım_max = 30
+    aralık_max = 31
+
+    __sql = SQL(host="123",
+                port=3306,
+                user="crypto",
+                password="123",
+                database="123")
+
+
+    # Class Method
+    # -------------------------------
+    @classmethod
+    def TarihAyarla(cls):
+        times = time.gmtime()
+        years = times[0]
+        month = times[1]
+        days = times[2]
+
+        if days == 1 and month == 1:
+            years = years - 1
+            month = 12
+            days = self.aralık_max
+
+        elif days == 1 and month == 2:
+            month = 1
+            days = self.ocak_max
+
+        elif days == 1 and month == 3:
+            month = 2
+            days = self.subat_max
+
+        elif days == 1 and month == 4:
+            month = 3
+            days = self.mart_max
+
+        elif days == 1 and month == 5:
+            month = 4
+            days = self.nisan_max
+
+        elif days == 1 and month == 6:
+            month = 5
+            days = self.mayıs_max
+
+        elif days == 1 and month == 7:
+            month = 6
+            days = self.haziran_max
+
+        elif days == 1 and month == 8:
+            month = 7
+            days = self.temmuz_max
+
+        elif days == 1 and month == 9:
+            month = 8
+            days = self.agustos_max
+
+        elif days == 1 and month == 10:
+            month = 9
+            days = self.eylul_max
+
+        elif days == 1 and month == 11:
+            month = 10
+            days = self.ekim_max
+
+        elif days == 1 and month == 12:
+            month = 11
+            days = self.kasım_max
+
+        return years, month, days
+
+    @classmethod
+    def YUZDE(cls, CryptCLOSE, CryptOPEN):
+        yuzde = 0
+        close = float(CryptCLOSE)
+        open = float(CryptOPEN)
+        while True:
+            value = (close * (yuzde)) / 100
+            if (close + float(value)) >= open:
+                break
+            else:
+                yuzde += 0.005
+
+        if yuzde != 0:
+            return round(yuzde, 3)
+
+
+        else:
+            yuzde = 0
+            close = float(CryptCLOSE)
+            open = float(CryptOPEN)
+            while True:
+                value = (open * (yuzde)) / 100
+                if (open + float(value)) >= close:
+                    break
+                else:
+                    yuzde += 0.005
+            return round(yuzde, 3)
+
+    @classmethod
+    def INTEGER(cls, Number):
+        y = f"{int(Number):,.2f}"
+        return y.replace(",", ".")
+
+    @classmethod
+    def TOTALBTC(cls, Price, Status):
+        allPrice = Price
+        Crypto = {}
+        Fiyatlar = {}
+        TOPLAM_USD = 0
+        BTC_FİYAT = 0
+        BTC_STOP = False
+
+        for i in Status['balances']:
+            if float(i['free']) > 0:
+                Crypto[i['asset']] = i['free']
+
+        for j in range(0, len(allPrice)):
+
+            for k in Crypto.keys():
+
+                if BTC_STOP == False and "BTCBUSD" == allPrice[j]['symbol']:
+                    BTC_FİYAT += float(allPrice[j]['price'])
+                    BTC_STOP += True
+
+                if (k + "BUSD") == allPrice[j]['symbol']:
+                    Fiyatlar[k + "BUSD"] = float(allPrice[j]['price']) * float(Crypto[k])
+
+        for m in Fiyatlar.keys():
+            TOPLAM_USD += float(Fiyatlar[m])
+
+        return str(round(round(TOPLAM_USD, 2) / int(BTC_FİYAT), 8)) + " BTC"
+
+    @classmethod
+    def HAFTALIK_TARIH_AYARLA(cls):
+        times = time.gmtime()
+        years = times[0]
+        month = times[1]
+        days = times[2]
+
+        if days >= 8:
+            days = days - 7
+        elif (days <= 7) and month == 1:
+            month = 12
+            years -= 1
+
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 2:
+            month -= 1
+
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 3:
+            month -= 1
+
+            if days == 7:
+                days = 28
+            elif days == 6:
+                days = 27
+            elif days == 5:
+                days = 26
+            elif days == 4:
+                days = 25
+            elif days == 3:
+                days = 24
+            elif days == 2:
+                days = 23
+            elif days == 1:
+                days = 22
+        elif (days <= 7) and month == 4:
+            month -= 1
+
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 5:
+            month -= 1
+            if days == 7:
+                days = 30
+            elif days == 6:
+                days = 29
+            elif days == 5:
+                days = 28
+            elif days == 4:
+                days = 27
+            elif days == 3:
+                days = 26
+            elif days == 2:
+                days = 25
+            elif days == 1:
+                days = 24
+        elif (days <= 7) and month == 6:
+            month -= 1
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 7:
+            month -= 1
+            if days == 7:
+                days = 30
+            elif days == 6:
+                days = 29
+            elif days == 5:
+                days = 28
+            elif days == 4:
+                days = 27
+            elif days == 3:
+                days = 26
+            elif days == 2:
+                days = 25
+            elif days == 1:
+                days = 24
+        elif (days <= 7) and month == 8:
+            month -= 1
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 9:
+            month -= 1
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 10:
+            month -= 1
+            if days == 7:
+                days = 30
+            elif days == 6:
+                days = 29
+            elif days == 5:
+                days = 28
+            elif days == 4:
+                days = 27
+            elif days == 3:
+                days = 26
+            elif days == 2:
+                days = 25
+            elif days == 1:
+                days = 24
+        elif (days <= 7) and month == 11:
+            month -= 1
+            if days == 7:
+                days = 31
+            elif days == 6:
+                days = 30
+            elif days == 5:
+                days = 29
+            elif days == 4:
+                days = 28
+            elif days == 3:
+                days = 27
+            elif days == 2:
+                days = 26
+            elif days == 1:
+                days = 25
+        elif (days <= 7) and month == 12:
+            month -= 1
+            if days == 7:
+                days = 30
+            elif days == 6:
+                days = 29
+            elif days == 5:
+                days = 28
+            elif days == 4:
+                days = 27
+            elif days == 3:
+                days = 26
+            elif days == 2:
+                days = 25
+            elif days == 1:
+                days = 24
+        return years, month, days
+
+    @classmethod
+    def FilterPozitif(cls, array):
+        return list(filter(lambda i: i > 0, array))
+
+    @classmethod
+    def FilterNegatif(cls, array):
+        return list(filter(lambda j: not(j > -1), array))
+
+    @classmethod
+    def FilterString(cls, array):
+        return list(filter(lambda j: j != '', array))
+
+
+    # Class Private Enginner All Function
+    # -------------------------------
+    def __Haftalık(self):
+        try:
+            Haftalık = 15
+            HaftalıkDict = {}
+            YesterdayDict = {}
+            while True:
+                time.sleep(1)
+                Haftalık -= 1
+
+                if Haftalık == 0:
+                    Haftalık = 15
+
+                    for i in range(0, len(self.Crypto)):
+                        crypto = HistoricalData(f'{self.Crypto[i]}-USD', 86400, ("{}-{}-{}-{}-{}".format(self.years_H,
+                                                                                                         self.month_H,
+                                                                                                         self.days_H,
+                                                                                                         "00", "00")),
+                                                verbose=False).retrieve_data()
+
+                        volume = 0
+                        StopFor = False
+
+                        for j in crypto['volume']:
+                            if StopFor == False:
+                                StopFor += True
+                                YesterdayDict[self.Crypto[i]] = float(crypto['volume'][-2])
+                            else:
+                                volume += float(j)
+
+
+                        HaftalıkDict[self.Crypto[i]] = volume
+
+
+
+                    self.YesterdayVolumeDict = YesterdayDict
+                    self.HaftalıkDict = HaftalıkDict
+
+        except:
+            pass
+    def __Günlük(self):
+        try:
+            YuzdeDict = {}
+            PriceDict = {}
+            DurumDict = {}
+            VolumeDict = {}
+
+            Times = 10
+
+            while True:
+                time.sleep(1)
+                Times -= 1
+
+                if Times == 0:
+                    Times = 10
+
+                    for i in range(0, len(self.Crypto)):
+                        crypto = HistoricalData(f'{self.Crypto[i]}-USD', 86400, ("{}-{}-{}-{}-{}".format(self.years,
+                                                                                                         self.month,
+                                                                                                         self.days,
+                                                                                                         "00", "00")),
+                                                verbose=False).retrieve_data()
+
+                        PriceDict[self.Crypto[i]] = crypto['close'][0]
+                        VolumeDict[self.Crypto[i]] = crypto['volume'][0]
+                        YuzdeDict[self.Crypto[i]] = str(self.YUZDE(crypto['close'][0], crypto['open'][0])) + "%"
+                        DurumDict[self.Crypto[i]] = "1" if float(crypto['close'][0]) > float(crypto['open'][0]) else "0"
+
+                    self.YuzdeDict = YuzdeDict
+                    self.PriceDict = PriceDict
+                    self.VolumeDict = VolumeDict
+                    self.DurumDict = DurumDict
+        except:
+            pass
+    def __Güncelleme(self):
+        def BINANCE_SYSTEM():
+            maxID = self.__sql.Select(query="id",
+                                      database="user")
+
+            for j in range(1, int(maxID[-1][0]) + 1):
+                try:
+                    data = self.__sql.Select(query="*",
+                                             database="user",
+                                             WHERE="id",
+                                             KEY=j)
+
+                    # spot_hacim, spot_bitcoin_kazanc, spot_usd_kazanc Otomasyon Yazılım Güncelleyecek
+                    balanceSPOT = self.__sql.Select(
+                        query="spot_toplam_bakiye",
+                        database="spot_balance",
+                        WHERE="kullanici_id",
+                        KEY=data[0][0])
+
+                    binance = Binance(data[0][6], data[0][7])
+                    totalBTC = self.TOTALBTC(Price=binance.ROB_ALL_CRYPTO_PRICE(), Status=binance.ROB_ACCOUNT_STATUS())
+
+                    for spot_balances in range(0, len(balanceSPOT[0])):
+                        self.__sql.Update(database="spot_balance",
+                                          table=self.spot_balance[spot_balances],
+                                          value=totalBTC,
+                                          WHERE="kullanici_id",
+                                          KEY=data[0][0])
+
+                except:
+                    print(f"Kullanıcı Bulunamadı : ID : {j}")
+        def FAVORI_SYSTEM():
+            maxID = self.__sql.Select(query="id",
+                                      database="user")
+
+            for j in range(1, int(maxID[-1][0]) + 1):
+
+                try:
+                    data = self.__sql.Select(query="*",
+                                             database="user",
+                                             WHERE="id",
+                                             KEY=j)
+
+                    favori = self.__sql.Select(query="favoricrypto_1, favoricrypto_2, favoricrypto_3, favoricrypto_4",
+                                               database="favori_crypto",
+                                               WHERE="kullanici_id",
+                                               KEY=data[0][0])
+
+                    for i in range(0, len(favori[0])):
+                        self.__sql.Update(database="favori_crypto",
+                                          table=self.query_fiyat[i],
+                                          value=self.PriceDict[favori[0][i]],
+                                          WHERE="kullanici_id",
+                                          KEY=data[0][0])
+
+                        self.__sql.Update(database="favori_crypto",
+                                          table=self.query_hacim[i],
+                                          value=self.INTEGER(float(self.VolumeDict[favori[0][i]]) * float(
+                                              self.PriceDict[favori[0][i]])),
+                                          WHERE="kullanici_id",
+                                          KEY=data[0][0])
+
+                        self.__sql.Update(database="favori_crypto",
+                                          table=self.query_yuzde[i],
+                                          value=self.YuzdeDict[favori[0][i]],
+                                          WHERE="kullanici_id",
+                                          KEY=data[0][0])
+
+                        self.__sql.Update(database="favori_crypto",
+                                          table=self.query_durum[i],
+                                          value=self.DurumDict[favori[0][i]],
+                                          WHERE="kullanici_id",
+                                          KEY=data[0][0])
+                except:
+                    print(f"Kullanıcı Bulunamadı : ID : {j}")
+        def ONERI_SYSTEM():
+            # Dict Attribute
+            # -------------------------------
+            MAX_DİCT = {}
+            MİN_DİCT = {}
+            DURUM_DİCT = {}
+            ORAN_DİCT = {}
+
+            # Array Attribute
+            # -------------------------------
+            MaxArray = []
+            MaxCryptoArray = []
+            MinArray = []
+            MinCryptoArray = []
+
+
+            # Data Analysis
+            # -------------------------------
+            for i in self.Crypto:
+                CryptoVolume = self.YesterdayVolumeDict[i]
+                if float(CryptoVolume) > (float(self.HaftalıkDict[i]) / 7):
+                    valuemax = str(self.INTEGER(
+                        (float(CryptoVolume) - (float(self.HaftalıkDict[i]) / 7)) * float(self.PriceDict[i]))).replace(".","")
+                    MAX_DİCT[i] = valuemax[:-2]
+
+                    DURUM_DİCT[i] = "1" if (int(CryptoVolume) - int(self.HaftalıkDict[i]) / 7 > 0) else "0"
+                    ORAN_DİCT[i] = str(self.YUZDE(int(CryptoVolume), int(self.HaftalıkDict[i] / 7)))
+
+
+                else:
+                    valuemin = str(self.INTEGER(
+                        (float(CryptoVolume) - (float(self.HaftalıkDict[i]) / 7)) * float(self.PriceDict[i]))).replace(".","")
+                    MİN_DİCT[i] = valuemin[:-2]
+                    DURUM_DİCT[i] = "1" if (int(CryptoVolume) - int(self.HaftalıkDict[i]) / 7 > 0) else "0"
+                    ORAN_DİCT[i] = str(self.YUZDE(int(CryptoVolume), int(self.HaftalıkDict[i] / 7)))
+            for i in range(0, len(self.Crypto)):
+
+                Leng = 0
+                Crypto = ""
+                ForStop = False
+                for j in MAX_DİCT.keys():
+
+                    if j in MaxCryptoArray:
+                        continue
+
+                    elif ForStop == False:
+                        ForStop += True
+                        Leng = int(MAX_DİCT[j])
+                        Crypto = j
+                        continue
+
+                    else:
+                        if not (Leng > int(MAX_DİCT[j])):
+                            Leng = int(MAX_DİCT[j])
+                            Crypto = j
+
+                MaxArray.append(Leng)
+                MaxCryptoArray.append(Crypto)
+            for i in range(0, len(self.Crypto)):
+
+                Leng = 0
+                Crypto = ""
+                ForStop = False
+                for j in MİN_DİCT.keys():
+
+                    if j in MinCryptoArray:
+                        continue
+
+                    elif ForStop == False:
+                        ForStop += True
+                        Leng = int(MİN_DİCT[j])
+                        Crypto = j
+                        continue
+
+                    else:
+                        if not (Leng < int(MİN_DİCT[j])):
+                            Leng = int(MİN_DİCT[j])
+                            Crypto = j
+
+                MinArray.append(Leng)
+                MinCryptoArray.append(Crypto)
+
+            # Data Update
+            # -------------------------------
+            MaxArray = self.FilterPozitif(MaxArray)
+            MaxCryptoArray = self.FilterString(MaxCryptoArray)
+            MinArray = self.FilterNegatif(MinArray)
+            MinCryptoArray = self.FilterString(MinCryptoArray)
+            for i in range(0, len(self.query_oneri_crypto)):
+                try:
+                    if len(MaxCryptoArray) > len(MinCryptoArray):
+                        Val = "Fazladan Bu Hafta " + str(self.INTEGER(MaxArray[i])) + " $ Nakit Hacimi Girdi."
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_metin[i],
+                                          value=Val,
+                                          WHERE="id",
+                                          KEY=1)
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_crypto[i],
+                                          value=MaxCryptoArray[i],
+                                          WHERE="id",
+                                          KEY=1)
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_durum[i],
+                                          value=DURUM_DİCT[MaxCryptoArray[i]],
+                                          WHERE="id",
+                                          KEY=1)
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_oran[i],
+                                          value=ORAN_DİCT[MaxCryptoArray[i]],
+                                          WHERE="id",
+                                          KEY=1)
+
+                    else:
+                        Val = "Fazladan Bu Hafta " + str(self.INTEGER(MaxArray[i])) + " $ Nakit Hacim Çıktı."
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_metin[i],
+                                          value=Val,
+                                          WHERE="id",
+                                          KEY=1)
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_crypto[i],
+                                          value=MinCryptoArray[i],
+                                          WHERE="id",
+                                          KEY=1)
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_durum[i],
+                                          value=DURUM_DİCT[MinCryptoArray[i]],
+                                          WHERE="id",
+                                          KEY=1)
+                        self.__sql.Update(database="oneri_crypto",
+                                          table=self.query_oneri_oran[i],
+                                          value=ORAN_DİCT[MaxCryptoArray[i]],
+                                          WHERE="id",
+                                          KEY=1)
+
+                except:
+                    pass
+        def BINANCE_HISTORY_SYSTEM():
+            pass
+
+
+
+        Times = 20
+        Oneri = 360
+        while True:
+            try:
+
+                time.sleep(1)
+                Times -= 1
+                Oneri -= 1
+
+                if Times == 0:
+                    Times = 20
+                    FAVORI_SYSTEM()
+                    BINANCE_SYSTEM()
+                    ONERI_SYSTEM()
+
+            except:
+                pass
+
+
+    # Class Constructors
+    # -------------------------------
+    def __init__(self):
+
+        # SQL Table
+        # -------------------------------
+        self.Crypto = ["BTC", "ETH", "SOL", "DOGE", "AVAX", "ENJ", "MANA", "ADA", "DOT", "LINK", "UNI", "LTC", "ETC"]
+        self.query_fiyat = ["favoricrypto_1_fiyat", "favoricrypto_2_fiyat", "favoricrypto_3_fiyat",
+                            "favoricrypto_4_fiyat"]
+        self.query_yuzde = ["favoricrypto_1_yuzde", "favoricrypto_2_yuzde", "favoricrypto_3_yuzde",
+                            "favoricrypto_4_yuzde"]
+        self.query_hacim = ["favoricrypto_1_hacim", "favoricrypto_2_hacim", "favoricrypto_3_hacim",
+                            "favoricrypto_4_hacim"]
+        self.query_durum = ["favoricrypto_1_durum", "favoricrypto_2_durum", "favoricrypto_3_durum",
+                            "favoricrypto_4_durum"]
+        self.spot_balance = ["spot_toplam_bakiye", "spot_hacim", "spot_bitcoin_kazanc", "spot_usd_kazanc"]
+        self.query_oneri_crypto = ["onericrypto_1","onericrypto_2","onericrypto_3","onericrypto_4","onericrypto_5"]
+        self.query_oneri_durum = ["onericrypto_1_durum","onericrypto_2_durum","onericrypto_3_durum","onericrypto_4_durum","onericrypto_5_durum"]
+        self.query_oneri_oran = ["onericrypto_1_oran", "onericrypto_2_oran", "onericrypto_3_oran","onericrypto_4_oran","onericrypto_5_oran"]
+        self.query_oneri_metin = ["onericrypto_1_metin", "onericrypto_2_metin", "onericrypto_3_metin","onericrypto_4_metin","onericrypto_5_metin"]
+
+
+        # Time Setting
+        # -------------------------------
+        self.years, self.month, self.days = self.TarihAyarla()
+        self.years_H, self.month_H, self.days_H = self.HAFTALIK_TARIH_AYARLA()
+
+
+        # Threading Pools
+        # -------------------------------
+        self.QThreadPool = QThreadPool()
+        self.WorkerHesapla = Worker(self.__Günlük)
+        self.WorkerGuncelleme = Worker(self.__Güncelleme)
+        self.WorketHaftalık = Worker(self.__Haftalık)
+
+        self.QThreadPool.start(self.WorkerHesapla)
+        self.QThreadPool.start(self.WorketHaftalık)
+        self.QThreadPool.start(self.WorkerGuncelleme)
+
+        # Attribute
+        # -------------------------------
+        self.PriceDict = {}
+        self.YuzdeDict = {}
+        self.VolumeDict = {}
+        self.DurumDict = {}
+        self.HaftalıkDict = {}
+        self.YesterdayVolumeDict = {}
+
+
+
+
+
+HistoricCrypto()
+
+
+
+
+
+
+
+
+
+
+
